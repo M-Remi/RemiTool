@@ -107,7 +107,7 @@ public class Main {
 
       );
 
-        //just for debugging of RB no i commented out FeatureEnvy
+
        // FeatureEnvySmell envy=new FeatureEnvySmell(path);
         RefuseBequest RB=new RefuseBequest(path);
 

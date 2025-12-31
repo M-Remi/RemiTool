@@ -47,7 +47,7 @@ public class RefuseBequest
                         .orElseThrow(() -> new RuntimeException("Class not found"));
         if (!entityClass.getExtendedTypes().isEmpty()) {
             SuperClassName = entityClass.getExtendedTypes(0).getNameAsString();
-            System.out.println("Extends: " + SuperClassName);
+            //System.out.println("Extends: " + SuperClassName);
 
 
             // Everything here handles the super class
@@ -100,7 +100,7 @@ public class RefuseBequest
             Field=superFields.size();
             FieldUsed=usedSuperFields.size();
 
-            System.out.println("Used super field " + usedSuperFields.size());
+           // System.out.println("Used super field " + usedSuperFields.size());
 
             for (MethodDeclaration subMethod : entityClass.getMethods())
             {
@@ -114,16 +114,16 @@ public class RefuseBequest
                     if (superMethods.get(name).contains(sig)) {
                         NoOfOverrideMethod +=1;
 
-                        System.out.println("OVERRIDDEN METHOD: " + name + "(" + sig + ")");
+                 //       System.out.println("OVERRIDDEN METHOD: " + name + "(" + sig + ")");
                     } else {
-                        System.out.println("OVERLOADED METHOD: " + name + "(" + sig + ")");
+               //         System.out.println("OVERLOADED METHOD: " + name + "(" + sig + ")");
                     }
                 } else {
-                    System.out.println("NEW METHOD: " + name + "(" + sig + ")");
+             //       System.out.println("NEW METHOD: " + name + "(" + sig + ")");
                 }
             }
-
-            System.out.println("Super Method " +NoOfSuperMethod + " override methd " + NoOfOverrideMethod );
+            calculate(entityClass.getNameAsString());
+           // System.out.println("Super Method " +NoOfSuperMethod + " override methd " + NoOfOverrideMethod );
 
 
 
@@ -142,15 +142,26 @@ public class RefuseBequest
 
 
     }
-    public void calculate()
+    public void calculate(String className)
     {
-         IMUR=NoOfOverrideMethod/NoOfSuperMethod;
+        double a=NoOfOverrideMethod;
+        double b=NoOfSuperMethod;
 
-         IFUR=FieldUsed/Field;
+         IMUR= a /b;
 
-         Double RBScore= 1- (IFUR+IMUR)/2;
+         a=FieldUsed;
+         b=Field;
+
+         IFUR=a/b;
 
 
+         Double RBScore= 1- ( IFUR +  IMUR)/2;
+        System.out.println("RBScore is " + RBScore.toString());
+        if (RBScore>0.33)
+        {
+            System.out.println("Refused bequest code smell detected in " + className );
+
+        }
 
     }
 }
