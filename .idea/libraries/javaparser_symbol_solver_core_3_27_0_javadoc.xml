@@ -1,0 +1,10 @@
+<component name="libraryTable">
+  <library name="javaparser-symbol-solver-core-3.27.0-javadoc">
+    <CLASSES />
+    <JAVADOC>
+      <root url="jar://$USER_HOME$/Desktop/phdWork/javaparser-symbol-solver-core-3.27.0-javadoc.jar!/" />
+      <root url="https://central.sonatype.com/artifact/com.github.javaparser/javaparser-symbol-solver-core/3.25.8?smo=true" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>
