@@ -13,6 +13,8 @@ public class LongMethodSmell
 {
     public static final String ANSI_RED = "\u001B[31m";
     public static final String Restore= "\u001B[0m";
+    int NoOfMethodWithLongSmell=0;
+
 
    public double CalculateDCF(MethodDeclaration method)
    {
