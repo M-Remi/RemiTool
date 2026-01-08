@@ -13,7 +13,7 @@ public class LongMethodSmell
 {
     public static final String ANSI_RED = "\u001B[31m";
     public static final String Restore= "\u001B[0m";
-    int NoOfMethodWithLongSmell=0;
+   static int NoOfMethodWithLongSmell=0;
 
 
    public double CalculateDCF(MethodDeclaration method)
@@ -86,6 +86,8 @@ public class LongMethodSmell
             System.out.print( ANSI_RED  + "\nDCF value: " + dcf);
             System.out.print( ANSI_RED  + "\nCyclomatic Complexity value: " + CC);
             System.out.print( ANSI_RED  + "\nThe method " +  method.getName() + " Has Long Method Code Smell ");
+            LongMethodSmell.NoOfMethodWithLongSmell +=1;
+
         }
         else
         {

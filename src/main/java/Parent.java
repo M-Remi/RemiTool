@@ -1,5 +1,6 @@
 public class Parent {
-
+    public int balance;
+    public int limit;
 
     public String familyName()
     {
@@ -10,5 +11,10 @@ public class Parent {
     {
         return "Paul";
 
+    }
+
+
+    public void deposit(int amount) {
+        balance += amount;
     }
 }

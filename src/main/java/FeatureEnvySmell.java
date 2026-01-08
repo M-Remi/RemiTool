@@ -2,18 +2,22 @@ import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
+import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
 import com.github.javaparser.ast.expr.ObjectCreationExpr;
+import com.github.javaparser.resolution.types.ResolvedType;
 import com.github.javaparser.symbolsolver.JavaSymbolSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.CombinedTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.JavaParserTypeSolver;
 import com.github.javaparser.symbolsolver.resolution.typesolvers.ReflectionTypeSolver;
+
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -23,7 +27,9 @@ public class FeatureEnvySmell {
     public static final String Restore = "\u001B[0m";
 
     public static final String ANSI_RED = "\u001B[31m";
-
+static long ParameterUsage=0;
+static  long totalUsage=0;
+static int FEMethods=0;
 
     public FeatureEnvySmell(String filePath) throws FileNotFoundException {
 
@@ -34,7 +40,7 @@ public class FeatureEnvySmell {
         // Setup symbol solver with source root and reflection
         CombinedTypeSolver typeSolver = new CombinedTypeSolver();
         typeSolver.add(new ReflectionTypeSolver());
-        typeSolver.add(new JavaParserTypeSolver("C:\\code\\Ats\\src"));
+        typeSolver.add(new JavaParserTypeSolver("C:\\code\\Ats\\src\\main\\java"));
 
         JavaSymbolSolver symbolSolver = new JavaSymbolSolver(typeSolver);
         StaticJavaParser.getConfiguration().setSymbolResolver(symbolSolver);
@@ -43,26 +49,44 @@ public class FeatureEnvySmell {
         CompilationUnit cu = StaticJavaParser.parse(codeFile);
         fillObjectCreatedArray(cu);
 
-        //cu.findAll(MethodDeclaration.class).forEach(method -> {
 
-          //  fillObjectCreatedArray(cu);
-            //    }
-
-        //);
     }
 
+    private boolean isCallOnVariable(MethodCallExpr mc, String variableName) {
+
+        Optional<Expression> scopeOpt = mc.getScope();
+
+        while (scopeOpt.isPresent()) {
+            Expression scope = scopeOpt.get();
+
+            if (scope.isNameExpr()) {
+                return scope.asNameExpr()
+                        .getNameAsString()
+                        .equals(variableName);
+            }
+
+            if (scope.isMethodCallExpr()) {
+                scopeOpt = scope.asMethodCallExpr().getScope();
+            } else if (scope.isFieldAccessExpr()) {
+                scopeOpt = Optional.of(
+                        scope.asFieldAccessExpr().getScope()
+                );
+            } else {
+                break;
+            }
+        }
+
+        return false;
+    }
     public long objectUsageInMethod(MethodDeclaration method, String variableName) {
         long calls = 0;
-        try {
-            long methodCalls = method.findAll(MethodCallExpr.class).stream()
-                    .map(MethodCallExpr::getScope)
-                    .filter(scope -> scope.isPresent() && scope.get().isNameExpr())
-                    .filter(scope -> scope.get().asNameExpr().getNameAsString().equals(variableName))
+
+            long methodCalls =  method.findAll(MethodCallExpr.class).stream()
+                    .filter(mc -> isCallOnVariable(mc, variableName))
                     .count();
+
             calls = methodCalls;
-        } catch (Exception e) {
-            System.out.println("Error in objectUsageInMethod: " + e.getMessage());
-        }
+
         return calls;
     }
     public long objectUseage (CompilationUnit cu, String vairableName)
@@ -164,7 +188,7 @@ public class FeatureEnvySmell {
 
     public void fillObjectCreatedArray(CompilationUnit cu)
     {
-        try {
+//        try {
 
 
            //  List<ObjectCreationExpr> objectCreationss = method.findAll(ObjectCreationExpr.class);
@@ -177,79 +201,61 @@ public class FeatureEnvySmell {
 
             // get all objects created at global and local level
 
-            cu.findAll(VariableDeclarator.class).forEach(v -> {
-                if (v.getInitializer().isPresent() && v.getInitializer().get().isObjectCreationExpr()) {
+        cu.findAll(MethodDeclaration.class).forEach(method -> {
 
-                    ObjectCreationExpr creationExpr = v.getInitializer().get().asObjectCreationExpr();
+            FeatureEnvySmell.totalUsage = totalVairableAndUsageInAMethod(cu, method);
+            String methodName = method.getNameAsString();
 
+            method.getParameters().forEach(param -> {
+                ResolvedType type = param.getType().resolve();
 
-                    fqName.set(creationExpr.getType().resolve().describe());
+                if (!type.isReferenceType()) return;
 
-                    if (fqName.get().startsWith("java") || fqName.get().startsWith("com.sun")
-                            || fqName.get().startsWith("sun") || fqName.get().startsWith("oracle")
-                            || fqName.get().startsWith("org.xml") || fqName.get().startsWith("com.oracle")) {
-                        //System.out.println( Restore + "\n  Object created from jdk: " + fqName);
+                String qName =
+                        type.asReferenceType().getQualifiedName();
 
-                    }
-                    else {  //System.out.println("\n  Normally created object: "  + v.getNameAsString() + " " + fqName);
+                // 🔒 FILTER OUT LIBRARIES
+                if (
+                        qName.startsWith("java.") ||
+                                qName.startsWith("javax.") ||
+                                qName.startsWith("jdk.") ||
+                                qName.startsWith("com.sun.") ||
+                                qName.startsWith("org.xml.") ||
+                                qName.startsWith("org.w3c.")
+                ) return;
 
-                        // System.out.println(Restore + "\n Normal Creation " +  v.getNameAsString() );
-                        v.findAncestor(MethodDeclaration.class)
-                                .ifPresentOrElse(method -> {
-                                            String methodName = method.getNameAsString();
-                                            long i = objectUsageInMethod(method, v.getNameAsString());
-                                            System.out.println(Restore + "\n Total usages of vairable '" + v.getNameAsString() + "' belonging to method " + methodName + " is: " + i);
-
-
-
-                                            long totalUsageInMethod = totalVairableAndUsageInAMethod(cu, method);
-                                            System.out.println(Restore + "\n Total Vairable usage (n): " + totalUsageInMethod);
+                long usage = objectUsageInMethod(method, param.getNameAsString());
+                FeatureEnvySmell.ParameterUsage+=usage;
 
 
-                                           if (i==0 || totalUsageInMethod==0)
-                                           {
-                                               System.out.println(Restore + "\n The vairable : " + v.getNameAsString() + "was never used");
-                                           }
-                                           else
-                                           {
-                                               double ratio = (double) i / (double) totalUsageInMethod;
-
-
-                                               double FEF= (0.5 * ratio);
-
-                                               FEF=  FEF + (1-0.5)*(1-Math.pow (0.5,i) );
-
-                                               double roundedUpFEF = new BigDecimal(Double.toString(FEF))
-                                                       .setScale(2, RoundingMode.UP)
-                                                       .doubleValue();
-                                               System.out.println(Restore + "\n Feature Envy Factor of : " + v.getNameAsString() + "= " + i + "/" + totalUsageInMethod + " = " + roundedUpFEF);
-                                           }
-                                        },
-                                        () -> {
-                                    // no need for feature envy of global object as feature envy is a method code smell
-                                           // long i = objectUseage(cu, v.getNameAsString());
-                                            //System.out.println(Restore +
-                                              //      "\n Total usages of variable '" + v.getNameAsString() +
-                                                //    "' (not inside any method, possibly a field) is: " + i);
-
-
-                                        }
-                                );
-
-
-                    }
-
-
-
-                }
             });
+            getFE(FeatureEnvySmell.ParameterUsage, FeatureEnvySmell.totalUsage, methodName);
+        });
 
 
-        } catch (Exception e) {
-            System.out.println("Error processing variable '" +  e.getMessage());
-        }
+
+
 
 
     }
+
+    public void getFE(long usage,long totalUsage, String methodName)
+    {
+
+        //if (usage == 0 || totalUsage == 0) return;
+
+        double ratio = (double) usage / totalUsage;
+
+        if (ratio > 0.5) {
+            System.out.println("⚠ Feature Envy detected: Method: " + methodName );
+            FeatureEnvySmell.FEMethods +=1;
+
+
+        }
+
+
+        }
+
+
 
 }

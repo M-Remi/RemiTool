@@ -12,7 +12,11 @@ import java.util.Scanner;
 
 
 public class Main {
-
+    static int  NoOfMethods=0;
+int NoOfMethodWithLongMethodSmell=0;
+int NoOfMethodWithLongParaSmell=0;
+    double FE,  RB;
+static int a;
     public void SmellDirection(MethodDeclaration method)
     {
 
@@ -29,6 +33,7 @@ public class Main {
         if (lineCount >20)
         {
             System.out.println("The Method " + method.getName() + " With LOC= " + lineCount+ " Has Long Method Code Smell");
+            LongMethodSmell.NoOfMethodWithLongSmell +=1;
         }
     else
         {
@@ -88,7 +93,7 @@ public class Main {
 
             //statistcs
             Statistics sta=new Statistics(method);
-
+            NoOfMethods +=1;
 
 
             if (method.getNameAsString().equals("main") && method.isStatic())
@@ -108,8 +113,11 @@ public class Main {
       );
 
 
-       // FeatureEnvySmell envy=new FeatureEnvySmell(path);
+        FeatureEnvySmell envy=new FeatureEnvySmell(path);
         RefuseBequest RB=new RefuseBequest(path);
+
+
+        Maintainability maintain=new Maintainability(NoOfMethods,LongMethodSmell.NoOfMethodWithLongSmell,LongParameterListSmell.NoOfMethodWithSmell,FeatureEnvySmell.FEMethods,RefuseBequest.RBScore);
 
 
     }

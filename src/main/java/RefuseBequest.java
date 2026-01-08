@@ -25,6 +25,8 @@ public class RefuseBequest
     int Field, FieldUsed;
     int NoOfSuperMethod=0;
     int NoOfOverrideMethod=0;
+    static  double RBScore=0;
+
     public RefuseBequest(String filePath) throws FileNotFoundException {
 
         File codeFile=new File(filePath);
@@ -157,6 +159,8 @@ public class RefuseBequest
 
          Double RBScore= 1- ( IFUR +  IMUR)/2;
         System.out.println("RBScore is " + RBScore.toString());
+
+        RefuseBequest.RBScore=RBScore;
         if (RBScore>0.33)
         {
             System.out.println("Refused bequest code smell detected in " + className );

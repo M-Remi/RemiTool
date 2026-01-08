@@ -5,6 +5,7 @@ import java.util.ArrayList;
 
 public class LongParameterListSmell
 {
+static int NoOfMethodWithSmell=0;
 
     public static final String Restore= "\u001B[0m";
 
@@ -13,7 +14,7 @@ public class LongParameterListSmell
     ArrayList<MethodDeclaration> methods = new ArrayList<MethodDeclaration>();
     ArrayList <String> ParameterTypes=new ArrayList<String>();
 
-    public LongParameterListSmell (MethodDeclaration method, Long noOfParameters)
+    public  LongParameterListSmell (MethodDeclaration method, Long noOfParameters)
     {
           System.out.println( Restore + "Method Name: " + method.getName() + " ");
           System.out.print("\nReturn Type " + method.getType() + " ");
@@ -51,10 +52,13 @@ public class LongParameterListSmell
             System.out.print( "\n-----------------------------------------------------------------------------------------\n" );
             System.out.print( ANSI_RED  + "The method " +  method.getName() + " Has Long Parameter List Code Smell ");
 
+            LongParameterListSmell.NoOfMethodWithSmell +=1;
+
 
 
 
         }
+
 
     }
 
